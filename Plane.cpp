@@ -35,7 +35,7 @@ bool Plane::isInside(glm::vec3 pt)
 	float ucvcDotn = glm::dot(glm::cross(uc, vc), n);
 	float udvdDotn = glm::dot(glm::cross(ud, vd), n);
 	
-	if (uavaDotn > 0 and ubvbDotn > 0 and ucvcDotn > 0 and udvdDotn > 0) {
+	if (uavaDotn > 0 && ubvbDotn > 0 && ucvcDotn > 0 && udvdDotn > 0) {
 		return true;
 	} else {
 		return false;
