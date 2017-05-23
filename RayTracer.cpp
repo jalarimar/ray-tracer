@@ -7,10 +7,12 @@
 #include <cmath>
 #include <vector>
 #include <glm/glm.hpp>
+#include <math.h>
 #include "Sphere.h"
 #include "Plane.h"
 #include "SceneObject.h"
 #include "Ray.h"
+#include "PerlinNoise.h"
 #include "TextureBMP.h"
 #include <GL/glut.h>
 using namespace std;
@@ -26,7 +28,9 @@ const float YMIN = -HEIGHT * 0.5;
 const float YMAX =  HEIGHT * 0.5;
 
 vector<SceneObject*> sceneObjects;  //A global list containing pointers to objects in the scene
-TextureBMP texture;
+TextureBMP texturePurple;
+TextureBMP textureBlue;
+
 
 //---The most important function in a ray tracer! ---------------------------------- 
 //   Computes the colour value obtained by tracing a ray and finding its 
@@ -44,45 +48,81 @@ glm::vec3 trace(Ray ray, int step)
 
     glm::vec3 col = sceneObjects[ray.xindex]->getColor(); // object's colour
     
-	// background
-	if (ray.xindex == 0) {
+	/** Remember to change indices when uncomment
+	// background 
+	if (ray.xindex == 0) { // INDEC
 		float texcoords = (ray.xpt.x + 40) / 80;
 		float texcoordt = (ray.xpt.y + 20) / 80;
-		return texture.getColorAt(texcoords, texcoordt);
+		return textureBlue.getColorAt(texcoords, texcoordt);
 	}
 	// floor
 	if (ray.xindex == 1) {
 		float texcoords = (ray.xpt.x + 40) / 100;
 		float texcoordt = (ray.xpt.z + 200 + 40) / 200;
-		return texture.getColorAt(texcoords, 1 - texcoordt);
+		return textureBlue.getColorAt(texcoords, 1 - texcoordt);
 	}
 	// leftside
-	if (ray.xindex == 2) {
+	if (ray.xindex == 2) { // INDEC
 		float texcoords = (ray.xpt.z + 200) / 200;
 		float texcoordt = (ray.xpt.y + 20 + 10) / 140;
-		return texture.getColorAt(texcoords, 1 - texcoordt);
+		return textureBlue.getColorAt(texcoords, 1 - texcoordt);
 	}
 	// rightside
-	if (ray.xindex == 3) {
+	if (ray.xindex == 3) { // INDEC
 		float texcoords = (ray.xpt.z + 200) / 200;
 		float texcoordt = (ray.xpt.y + 20) / 80;
-		return texture.getColorAt(1 - texcoords, texcoordt);
+		return textureBlue.getColorAt(1 - texcoords, texcoordt);
 	}
 	
 	// topside
-	if (ray.xindex == 4) {
+	if (ray.xindex == 4) { // INDEC
 		float texcoords = (ray.xpt.x + 40) / 100;
 		float texcoordt = (ray.xpt.z + 240) / 200;
-		return texture.getColorAt(texcoords, 1 - texcoordt);
+		return textureBlue.getColorAt(texcoords, 1 - texcoordt);
 	}
 	// behindside
-	if (ray.xindex == 5) {
+	if (ray.xindex == 5) { // INDEC
 		float texcoords = (ray.xpt.x + 80) / 160;
 		float texcoordt = (ray.xpt.y + 40) / 160;
-		return texture.getColorAt(texcoords, texcoordt);
+		return textureBlue.getColorAt(texcoords, texcoordt);
 	}
+	*/
 
-    /// mine
+	// sphere texture
+	//if (ray.xindex == 3) { //INDEC
+	//	float pi = 3.14;
+	//	glm::vec3 n = sceneObjects[ray.xindex]->normal(ray.xpt);
+	//	float norx = (ray.xpt.x + 15) / 8;
+	//	float nory = (ray.xpt.y + 10) / 8;
+	//	float norz = (ray.xpt.z + 115) / 8;
+	//	float texcoords = 0.5 + atan2(norz, norx) / (2 * pi);
+	//	float texcoordt = 0.5 - asin(nory) / pi;
+	//	return texturePurple.getColorAt(1 - (texcoords/2+texcoords/4), (texcoordt/2+texcoordt/4));
+	//	
+	//	/*float radius = 16;
+	//	float t = acos(norz / 4) / pi;
+	//	if (nory >= 0) {
+	//		float s = acos(norx / (radius * sin(pi*t))) / (2*pi);
+	//		return texturePurple.getColorAt(s, t);
+	//	} else {
+	//		float s = (pi + acos(norx / (radius * sin(pi*t)))) / (2*pi);
+	//		return texturePurple.getColorAt(s, t);
+	//	}*/
+	//}
+	/*
+	// procedural pattern
+	if (ray.xindex == 2) { // INDEC
+		float norx = (ray.xpt.x - 2.5) / 16; // red 4.6
+		float nory = (ray.xpt.y - 5) / 20; // green
+		PerlinNoise perlin;
+		double noise = perlin.noise(nory * 5, norx * 5, 0);
+		//col = glm::vec3(1, ((1 + sin(nory + noise)) / 2), 0);
+		//double random = ((double)rand() / (double)RAND_MAX);
+		cout << noise;
+		col = glm::vec3(1, (1 + sin(nory + 20 * noise)) / 2.5, 0); // decreasing 20 increases smokiness, decreasing 2.5 decreases blending
+	}*/
+
+    //--- mine ---
     glm::vec3 normalVector = sceneObjects[ray.xindex] -> normal(ray.xpt);
     glm::vec3 lightVector = light - ray.xpt;
     glm::vec3 unitLightVector = glm::normalize(lightVector); // normalize
@@ -99,7 +139,6 @@ glm::vec3 trace(Ray ray, int step)
 		specularCol = glm::vec3(term * glm::vec3(1, 1, 1)); // light colour
 	}
 	
-	// Lab 8
 	Ray shadow(ray.xpt, unitLightVector);
 	shadow.closestPt(sceneObjects);
 	float lightDist = glm::length(lightVector);
@@ -108,17 +147,22 @@ glm::vec3 trace(Ray ray, int step)
 		return ambientCol * col; // behind the sphere is in shadow (only ambient)
 	} else {
 		
-		// Lab 8
 		glm::vec3 colorSum(0);
-		// makes the blue sphere reflective
-		if (ray.xindex == 6 && step < MAX_STEPS) {
+		// reflective INDEC
+		
+		if (ray.xindex == 0 && step < MAX_STEPS) {
 			glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
 			Ray reflectedRay(ray.xpt, reflectedDir);
 			glm::vec3 reflectedCol = trace(reflectedRay, step + 1);
 			colorSum = colorSum + (0.9f * reflectedCol);
 		}
+		/*
+		if (ray.xindex == 2) {
+			// no specular, no reflection INDEC
+			return (ambientCol * col + lDotn * col);
+		}*/
 		
-		return (ambientCol * col + lDotn * col + specularCol + colorSum); // ambient + diffuse + specular
+		return (ambientCol * col + lDotn * col + specularCol + colorSum); // ambient + diffuse + specular + reflection
 	}
 	
 }
@@ -180,7 +224,8 @@ void initialize()
     glClearColor(0, 0, 0, 1);
 
 	// TODO BEFORE SUBMISSION find a way of loading based on relative path
-	texture = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\plain-blue-space.bmp");
+	texturePurple = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\purple-space.bmp");
+	textureBlue = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\plain-blue-space.bmp");
 
 	Plane *background = new Plane(glm::vec3(-40, -20, -200), // back left
 		glm::vec3(40, -20, -200), // back right
@@ -222,8 +267,8 @@ void initialize()
 	//-- Create a pointer to a sphere object: x, y, z, radius, color
 	Sphere *sphereBlue = new Sphere(glm::vec3(-5.0, -5.0, -150.0), 15.0, glm::vec3(0, 0, 0.8));
 	Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -130.0), 2.3, glm::vec3(1, 0, 0));
-	Sphere *sphereGreen = new Sphere(glm::vec3(15.0, 10, -85.0), 5.0, glm::vec3(0, 1, 0));
-	Sphere *sphereGrey = new Sphere(glm::vec3(-10, -10, -65.0), 4.0, glm::vec3(0.7, 0.7, 0.7));
+	Sphere *sphereGreen = new Sphere(glm::vec3(15.0, 10, -185.0), 25.0, glm::vec3(0, 1, 0));
+	Sphere *sphereGrey = new Sphere(glm::vec3(-15, -10, -115.0), 8.0, glm::vec3(0.7, 0.7, 0.7));
 	
 	// box
 	float min_x = 20;
@@ -232,7 +277,7 @@ void initialize()
 	float max_y = -17;
 	float min_z = -110;
 	float max_z = -140;
-	glm::vec3 boxcol(0.7, 0.7, 0.7);
+	glm::vec3 boxcol(1, 0.7, 0);
 	
 	glm::vec3 flb(min_x, min_y, min_z);
 	glm::vec3 flt(min_x, max_y, min_z);
@@ -252,19 +297,19 @@ void initialize()
 	
 
 	//--Add the above to the list of scene objects.
-	sceneObjects.push_back(background); // 0
-	sceneObjects.push_back(floor);
-	sceneObjects.push_back(leftside);
-	sceneObjects.push_back(rightside);
-	sceneObjects.push_back(topside);
-	sceneObjects.push_back(behindside);
+	//sceneObjects.push_back(background); // 0
+	//sceneObjects.push_back(floor);
+	//sceneObjects.push_back(leftside);
+	//sceneObjects.push_back(rightside);
+	//sceneObjects.push_back(topside);
+	//sceneObjects.push_back(behindside);
 
-	sceneObjects.push_back(sphereBlue); // 6
+	sceneObjects.push_back(sphereBlue); // 0
 	sceneObjects.push_back(sphereRed);
-	//sceneObjects.push_back(sphereGreen);
-	//sceneObjects.push_back(sphereGrey);
+	sceneObjects.push_back(sphereGreen);
+	sceneObjects.push_back(sphereGrey);
 	
-	sceneObjects.push_back(left); // 10
+	sceneObjects.push_back(left); // 4
 	sceneObjects.push_back(right);
 	sceneObjects.push_back(bottom);
 	sceneObjects.push_back(top);
