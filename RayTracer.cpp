@@ -284,7 +284,7 @@ void initialize()
 	//-- Create a pointer to a sphere object: x, y, z, radius, color
 	Sphere *sphereBlue = new Sphere(glm::vec3(-5.0, -5.0, -150.0), 15.0, glm::vec3(0, 0, 0.8));
 	//Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -130.0), 2.3, glm::vec3(1, 0, 0));
-	Cylinder *sphereRed = new Cylinder(glm::vec3(0, 0, -100), 1, 5, glm::vec3(1, 0, 0));
+	Cylinder *sphereRed = new Cylinder(glm::vec3(15, -20, -100), 4, 5, glm::vec3(1, 0, 0));
 	Sphere *sphereGreen = new Sphere(glm::vec3(15.0, 10, -185.0), 25.0, glm::vec3(0, 1, 0));
 	Sphere *sphereGrey = new Sphere(glm::vec3(-15, -10, -115.0), 8.0, glm::vec3(0.7, 0.7, 0.7));
 	
