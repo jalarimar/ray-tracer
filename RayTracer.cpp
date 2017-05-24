@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <math.h>
 #include "Sphere.h"
+#include "Cylinder.h"
 #include "Plane.h"
 #include "SceneObject.h"
 #include "Ray.h"
@@ -148,18 +149,34 @@ glm::vec3 trace(Ray ray, int step)
 	} else {
 		
 		glm::vec3 colorSum(0);
-		// reflective INDEC
-		
-		if (ray.xindex == 0 && step < MAX_STEPS) {
+		// reflective INDEC	
+		/*if (ray.xindex == 3 && step < MAX_STEPS) {
 			glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
 			Ray reflectedRay(ray.xpt, reflectedDir);
 			glm::vec3 reflectedCol = trace(reflectedRay, step + 1);
 			colorSum = colorSum + (0.9f * reflectedCol);
-		}
+		}*/
 		/*
 		if (ray.xindex == 2) {
 			// no specular, no reflection INDEC
 			return (ambientCol * col + lDotn * col);
+		}*/
+		/*
+		// INDEC
+		if (ray.xindex == 0 && step < MAX_STEPS) {
+			float eta = 1/1.5;
+			glm::vec3 refractedDir1 = glm::refract(ray.dir, normalVector, eta);
+			
+			Ray refractedRay(ray.xpt, refractedDir1);
+			refractedRay.closestPt(sceneObjects);
+			glm::vec3 normal = sceneObjects[refractedRay.xindex]->normal(refractedRay.xpt);
+			glm::vec3 refractedDir2 = glm::refract(refractedDir1, -normal, 1.0f/eta);
+
+			Ray outputRay(refractedRay.xpt, refractedDir2);
+			outputRay.closestPt(sceneObjects);
+			if (outputRay.xindex == -1) return backgroundCol;
+			glm::vec3 refrCol = trace(outputRay, step+1); // has to be trace
+			return refrCol;
 		}*/
 		
 		return (ambientCol * col + lDotn * col + specularCol + colorSum); // ambient + diffuse + specular + reflection
@@ -266,7 +283,8 @@ void initialize()
 
 	//-- Create a pointer to a sphere object: x, y, z, radius, color
 	Sphere *sphereBlue = new Sphere(glm::vec3(-5.0, -5.0, -150.0), 15.0, glm::vec3(0, 0, 0.8));
-	Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -130.0), 2.3, glm::vec3(1, 0, 0));
+	//Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -130.0), 2.3, glm::vec3(1, 0, 0));
+	Cylinder *sphereRed = new Cylinder(glm::vec3(0, 0, -100), 1, 5, glm::vec3(1, 0, 0));
 	Sphere *sphereGreen = new Sphere(glm::vec3(15.0, 10, -185.0), 25.0, glm::vec3(0, 1, 0));
 	Sphere *sphereGrey = new Sphere(glm::vec3(-15, -10, -115.0), 8.0, glm::vec3(0.7, 0.7, 0.7));
 	
@@ -278,6 +296,21 @@ void initialize()
 	float min_z = -110;
 	float max_z = -140;
 	glm::vec3 boxcol(1, 0.7, 0);
+
+	// translate using mat4 before shearing?
+	glm::mat4 t(1, 0, 0, -min_x,
+				0, 1, 0, -min_y,
+				0, 0, 1, -min_z,
+				0, 0, 0, 1);
+
+	glm::mat4 m(1, 1, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1);
+
+	glm::mat3 shear(1, 0, 0,
+					1, 1, 0,
+					0, 0, 1);
 	
 	glm::vec3 flb(min_x, min_y, min_z);
 	glm::vec3 flt(min_x, max_y, min_z);
@@ -288,6 +321,26 @@ void initialize()
 	glm::vec3 brt(max_x, max_y, max_z);
 	glm::vec3 brb(max_x, min_y, max_z);
 	
+	flb = glm::vec3((m * t * glm::vec4(glm::vec3(flb), 1.0)).x / (m * t * glm::vec4(glm::vec3(flb), 1.0)).w,
+		(m * t * glm::vec4(glm::vec3(flb), 1.0)).y / (m * t * glm::vec4(glm::vec3(flb), 1.0)).w,
+		(m * t * glm::vec4(glm::vec3(flb), 1.0)).z / (m * t * glm::vec4(glm::vec3(flb), 1.0)).w); // normalise
+	flt = glm::vec3(m * t * glm::vec4(glm::vec3(flt), 1.0));
+	frb = glm::vec3(m * t * glm::vec4(glm::vec3(frb), 1.0));
+	frt = glm::vec3(m * t * glm::vec4(glm::vec3(frt), 1.0));
+	blb = glm::vec3(m * t * glm::vec4(glm::vec3(blb), 1.0));
+	blt = glm::vec3(m * t * glm::vec4(glm::vec3(blt), 1.0));
+	brb = glm::vec3(m * t * glm::vec4(glm::vec3(brb), 1.0));
+	brt = glm::vec3(m * t * glm::vec4(glm::vec3(brt), 1.0));
+	/*
+	flb = shear * flb;
+	flt = shear * flt;
+	frb = shear * frb;
+	frt = shear * frt;
+	blb = shear * blb;
+	blt = shear * blt;
+	brb = shear * brb;
+	brt = shear * brt;
+	*/
 	Plane *left = new Plane(blb, flb, flt, blt, boxcol); 
 	Plane *right = new Plane(brt, frt, frb, brb, boxcol); 
 	Plane *bottom = new Plane(flb, blb, brb, frb, boxcol);
@@ -309,12 +362,12 @@ void initialize()
 	sceneObjects.push_back(sphereGreen);
 	sceneObjects.push_back(sphereGrey);
 	
-	sceneObjects.push_back(left); // 4
-	sceneObjects.push_back(right);
-	sceneObjects.push_back(bottom);
-	sceneObjects.push_back(top);
-	sceneObjects.push_back(front);
-	sceneObjects.push_back(back);
+	//sceneObjects.push_back(left); // 4
+	//sceneObjects.push_back(right);
+	//sceneObjects.push_back(bottom);
+	//sceneObjects.push_back(top);
+	//sceneObjects.push_back(front);
+	//sceneObjects.push_back(back);
 	
 }
 
