@@ -10,6 +10,7 @@
 #include <math.h>
 #include "Sphere.h"
 #include "Cylinder.h"
+#include "Cone.h"
 #include "Plane.h"
 #include "SceneObject.h"
 #include "Ray.h"
@@ -228,6 +229,8 @@ void display()
 }
 
 
+
+
 //---This function initializes the scene ------------------------------------------- 
 //   Specifically, it creates scene objects (spheres, planes, cones, cylinders etc)
 //     and add them to the list of scene objects.
@@ -286,24 +289,27 @@ void initialize()
 	//Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -130.0), 2.3, glm::vec3(1, 0, 0));
 	Cylinder *sphereRed = new Cylinder(glm::vec3(15, -20, -100), 4, 5, glm::vec3(1, 0, 0));
 	Sphere *sphereGreen = new Sphere(glm::vec3(15.0, 10, -185.0), 25.0, glm::vec3(0, 1, 0));
-	Sphere *sphereGrey = new Sphere(glm::vec3(-15, -10, -115.0), 8.0, glm::vec3(0.7, 0.7, 0.7));
-	
+	//Sphere *sphereGrey = new Sphere(glm::vec3(-15, -10, -115.0), 8.0, glm::vec3(0.7, 0.7, 0.7));
+	Cone *sphereGrey = new Cone(glm::vec3(0, 5, -100), 1, 5, glm::vec3(0.7, 0.7, 0.7));
+	// changing y and radius and height is interesting
+
+	/*
 	// box
-	float min_x = 20;
-	float max_x = 30;
-	float min_y = -20;
-	float max_y = -17;
-	float min_z = -110;
-	float max_z = -140;
+	float min_x = 0; // 20;
+	float max_x = 10; // 30;
+	float min_y = 0;// -20;
+	float max_y = 10; // -17;
+	float min_z = 0; // -110;
+	float max_z = 10; // -140;
 	glm::vec3 boxcol(1, 0.7, 0);
 
 	// translate using mat4 before shearing?
-	glm::mat4 t(1, 0, 0, -min_x,
-				0, 1, 0, -min_y,
-				0, 0, 1, -min_z,
+	glm::mat4 t(1, 0, 0, min_x,
+				0, 1, 0, min_y,
+				0, 0, 1, min_z,
 				0, 0, 0, 1);
 
-	glm::mat4 m(1, 1, 0, 0,
+	glm::mat4 m(1, 2, 0, 0,
 				0, 1, 0, 0,
 				0, 0, 1, 0,
 				0, 0, 0, 1);
@@ -320,17 +326,26 @@ void initialize()
 	glm::vec3 blb(min_x, min_y, max_z);
 	glm::vec3 brt(max_x, max_y, max_z);
 	glm::vec3 brb(max_x, min_y, max_z);
+
+	glm::vec4 flb4 = m * glm::vec4(glm::vec3(flb), 1.0);
+	glm::vec4 flt4 = m * glm::vec4(glm::vec3(flt), 1.0);
+	glm::vec4 frb4 = m * glm::vec4(glm::vec3(frb), 1.0);
+	glm::vec4 frt4 = m * glm::vec4(glm::vec3(frt), 1.0);
+	glm::vec4 blb4 = m * glm::vec4(glm::vec3(blt), 1.0);
+	glm::vec4 blt4 = m * glm::vec4(glm::vec3(blb), 1.0);
+	glm::vec4 brb4 = m * glm::vec4(glm::vec3(brt), 1.0);
+	glm::vec4 brt4 = m * glm::vec4(glm::vec3(brb), 1.0);
 	
-	flb = glm::vec3((m * t * glm::vec4(glm::vec3(flb), 1.0)).x / (m * t * glm::vec4(glm::vec3(flb), 1.0)).w,
-		(m * t * glm::vec4(glm::vec3(flb), 1.0)).y / (m * t * glm::vec4(glm::vec3(flb), 1.0)).w,
-		(m * t * glm::vec4(glm::vec3(flb), 1.0)).z / (m * t * glm::vec4(glm::vec3(flb), 1.0)).w); // normalise
-	flt = glm::vec3(m * t * glm::vec4(glm::vec3(flt), 1.0));
-	frb = glm::vec3(m * t * glm::vec4(glm::vec3(frb), 1.0));
-	frt = glm::vec3(m * t * glm::vec4(glm::vec3(frt), 1.0));
-	blb = glm::vec3(m * t * glm::vec4(glm::vec3(blb), 1.0));
-	blt = glm::vec3(m * t * glm::vec4(glm::vec3(blt), 1.0));
-	brb = glm::vec3(m * t * glm::vec4(glm::vec3(brb), 1.0));
-	brt = glm::vec3(m * t * glm::vec4(glm::vec3(brt), 1.0));
+	flb = glm::vec3(flb4.x / flb4.w, flb4.y / flb4.w, flb4.z / flb4.w); // normalise
+	flt = glm::vec3(flt4.x / flt4.w, flt4.y / flt4.w, flt4.z / flt4.w);
+	frb = glm::vec3(frb4.x / frb4.w, frb4.y / frb4.w, frb4.z / frb4.w);
+	frt = glm::vec3(frt4.x / frt4.w, frt4.y / frt4.w, frt4.z / frt4.w);
+	blb = glm::vec3(blb4.x / blb4.w, blb4.y / blb4.w, blb4.z / blb4.w);
+	blt = glm::vec3(blt4.x / blt4.w, blt4.y / blt4.w, blt4.z / blt4.w);
+	brb = glm::vec3(brb4.x / brb4.w, brb4.y / brb4.w, brb4.z / brb4.w);
+	brt = glm::vec3(brt4.x / brt4.w, brt4.y / brt4.w, brt4.z / brt4.w);
+	*/
+	//flb = glm::normalize(glm::vec4(glm::vec3(flb), 1.0));
 	/*
 	flb = shear * flb;
 	flt = shear * flt;
@@ -341,13 +356,14 @@ void initialize()
 	brb = shear * brb;
 	brt = shear * brt;
 	*/
+	/*
 	Plane *left = new Plane(blb, flb, flt, blt, boxcol); 
 	Plane *right = new Plane(brt, frt, frb, brb, boxcol); 
 	Plane *bottom = new Plane(flb, blb, brb, frb, boxcol);
 	Plane *top = new Plane(flt, frt, brt, blt, boxcol);
 	Plane *front = new Plane(flb, frb, frt, flt, boxcol); 
 	Plane *back = new Plane(blb, blt, brt, brb, boxcol);
-	
+	*/
 
 	//--Add the above to the list of scene objects.
 	//sceneObjects.push_back(background); // 0
@@ -358,8 +374,8 @@ void initialize()
 	//sceneObjects.push_back(behindside);
 
 	sceneObjects.push_back(sphereBlue); // 0
-	sceneObjects.push_back(sphereRed);
-	sceneObjects.push_back(sphereGreen);
+	//sceneObjects.push_back(sphereRed);
+	//sceneObjects.push_back(sphereGreen);
 	sceneObjects.push_back(sphereGrey);
 	
 	//sceneObjects.push_back(left); // 4
