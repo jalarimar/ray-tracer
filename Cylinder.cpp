@@ -26,7 +26,7 @@ Cylinder::Cylinder(glm::vec3 centre, float rad, float hight, glm::vec3 col)
 /**
 * Cylinder's intersection method.  The input is a ray (pos, dir). 
 */
-float Cylinder::intersect(glm::vec3 posn, glm::vec3 dir)
+float Cylinder::intersect_internal(glm::vec3 posn, glm::vec3 dir)
 {
 	float xc = center.x;
 	float yc = center.y;
@@ -52,42 +52,47 @@ float Cylinder::intersect(glm::vec3 posn, glm::vec3 dir)
 
 	float t1 = (-b - sqrt(discrim)) / (2*a);
 	float t2 = -b + sqrt(discrim) / (2*a);
+	float t = -5.0;
 
 	if (fabs(t2) < 0.001) t2 = -1.0;
 	if (fabs(t1) < 0.001)
 	{
-		if (t2 > 0) return t2;
+		if (t2 > 0) t = t2;
 		else t1 = -1.0;
 	}
 
-	float y1 = y0 + dy*t1;
-	float y2 = y0 + dy*t2;
-	if ((y1-yc) > height || (y1 - yc) < 0) {
-		t1 = -1.0; // t1 invalid
-		if ((y2 - yc) <= height && (y2 - yc) >= 0) {
-			return t2; // t2 valid
-		}
+	if (t == -5.0) {
+		t = (t1 < t2) ? t1 : t2;
+	}
+	// return t;
+	if (t < 0.0) {
+		return t;
 	}
 
+	float y = y0 + dy*t;
+	if ((y-yc) > height || (y - yc) < 0) {
+		return -1.0; // invalid
+	}
+	/*
 	float x1 = x0 + dx*t1;
 	float z1 = z0 + dz*t1;
 	if (fabs(y1-yc) == height && fabs(x1-xc) < radius && fabs(z1-zc) < radius) {
 		return t1;
 	}
-	return (t1 < t2) ? t1 : t2; // the smallest
+	*/
+	return t;
 }
 
 /**
 * Returns the unit normal vector at a given point.
 * Assumption: The input point p lies on the cylinder.
 */
-glm::vec3 Cylinder::normal(glm::vec3 point)
+glm::vec3 Cylinder::normal_internal(glm::vec3 point)
 {
 	float x = point.x;
 	float xc = center.x;
 	float z = point.z;
 	float zc = center.z;
     glm::vec3 n((x-xc)/radius, 0, (z-zc)/radius);
-    //n = glm::normalize(n); //???
     return n;
 }

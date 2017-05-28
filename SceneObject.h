@@ -18,13 +18,22 @@ class SceneObject
 {
 protected:
 	glm::vec3 color;
+	glm::mat4 transform;
+	glm::mat4 transformInv;
+	glm::mat4 transformInvTrans;
+
+	virtual float intersect_internal(glm::vec3 pos, glm::vec3 dir) = 0;
+	virtual glm::vec3 normal_internal(glm::vec3 pos) = 0;
 public:
 	SceneObject() {}
-    virtual float intersect(glm::vec3 pos, glm::vec3 dir) = 0;
-	virtual glm::vec3 normal(glm::vec3 pos) = 0;
+	float intersect(glm::vec3 pos, glm::vec3 dir);
+	glm::vec3 normal(glm::vec3 pos);
+
 	virtual ~SceneObject() {}
 	glm::vec3 getColor();
 	void setColor(glm::vec3 col);
+	glm::mat4 getTransform();
+	void setTransform(glm::mat4 col);
 };
 
 #endif

@@ -28,7 +28,7 @@ bool Plane::isInside(glm::vec3 pt)
 	glm::vec3 ud = a - d;
 	glm::vec3 vd = pt - d;
 	
-	glm::vec3 n = normal(pt);
+	glm::vec3 n = normal_internal(pt);
 	
 	float uavaDotn = glm::dot(glm::cross(ua, va), n);
 	float ubvbDotn = glm::dot(glm::cross(ub, vb), n);
@@ -46,9 +46,9 @@ bool Plane::isInside(glm::vec3 pt)
 /**
 * Plane's intersection method.  The input is a ray (pos, dir). 
 */
-float Plane::intersect(glm::vec3 posn, glm::vec3 dir)
+float Plane::intersect_internal(glm::vec3 posn, glm::vec3 dir)
 {
-	glm::vec3 n = normal(posn);
+	glm::vec3 n = normal_internal(posn);
 	glm::vec3 vdif = a - posn;
 	float vdotn = glm::dot(dir, n);
 	if(fabs(vdotn) < 1.e-4) return -1;
@@ -65,7 +65,7 @@ float Plane::intersect(glm::vec3 posn, glm::vec3 dir)
 * member variables a, b, c, d.
 * The parameter pt is a dummy variable and is not used.
 */
-glm::vec3 Plane::normal(glm::vec3 pt)
+glm::vec3 Plane::normal_internal(glm::vec3 pt)
 {
 	glm::vec3 n = glm::vec3(0);
 

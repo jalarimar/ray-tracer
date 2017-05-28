@@ -35,9 +35,9 @@ public:
 		color = col;
 	};
 
-	float intersect(glm::vec3 posn, glm::vec3 dir);
+	float intersect_internal(glm::vec3 posn, glm::vec3 dir);
 
-	glm::vec3 normal(glm::vec3 p);
+	glm::vec3 normal_internal(glm::vec3 p);
 
 };
 

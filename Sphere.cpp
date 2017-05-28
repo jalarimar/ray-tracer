@@ -12,7 +12,7 @@
 /**
 * Sphere's intersection method.  The input is a ray (pos, dir). 
 */
-float Sphere::intersect(glm::vec3 posn, glm::vec3 dir)
+float Sphere::intersect_internal(glm::vec3 posn, glm::vec3 dir)
 {
     glm::vec3 vdif = posn - center;
     float b = glm::dot(dir, vdif);
@@ -39,7 +39,7 @@ float Sphere::intersect(glm::vec3 posn, glm::vec3 dir)
 * Returns the unit normal vector at a given point.
 * Assumption: The input point p lies on the sphere.
 */
-glm::vec3 Sphere::normal(glm::vec3 p)
+glm::vec3 Sphere::normal_internal(glm::vec3 p)
 {
     glm::vec3 n = p - center;
     n = glm::normalize(n);
