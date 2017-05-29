@@ -33,6 +33,7 @@ const float PI = 3.14159;
 vector<SceneObject*> sceneObjects;  //A global list containing pointers to objects in the scene
 TextureBMP texturePurple;
 TextureBMP textureBlue;
+PerlinNoise perlin;
 
 glm::vec3 textureBackground(Ray ray) {
 	float texcoords = (ray.xpt.x + 40) / 80;
@@ -72,22 +73,28 @@ glm::vec3 textureBehindside(Ray ray) {
 
 glm::vec3 texture2D(Ray ray) {
 	glm::vec3 n = sceneObjects[ray.xindex]->normal(ray.xpt);
-	float norx = (ray.xpt.x + 15) / 8; // normalise x
+	float norx = (ray.xpt.x + 18) / 8; // normalise x
 	float nory = (ray.xpt.y + 10) / 8; // normalise y
 	float norz = (ray.xpt.z + 115) / 8; // normalise z
 	float texcoords = 0.5 + atan2(norz, norx) / (2 * PI);
 	float texcoordt = 0.5 - asin(nory) / PI;
-	//return texturePurple.getColorAt(1 - (texcoords / 2 + texcoords / 4), (texcoordt / 2 + texcoordt / 4));
 	return texturePurple.getColorAt(texcoords, texcoordt);
 }
 
 glm::vec3 textureProcedural(Ray ray) {
 	float norx = (ray.xpt.x - 2.5) / 16; // normalise x
 	float nory = (ray.xpt.y - 5) / 20; // normalise y
-	PerlinNoise perlin;
 	double noise = perlin.noise(nory * 5, norx * 5, 0);
 	return glm::vec3(1, (1 + sin(30 * nory + 20 * noise)) / 2.5, 0); 
 	// decreasing 20 increases smokiness, decreasing 2.5 decreases blending
+}
+
+glm::vec3 textureProceduralBox(Ray ray) {
+	float norx = (ray.xpt.x + 20) / 10; // normalise x
+	float nory = (ray.xpt.y + 10) / 20; // normalise y
+	float norz = (ray.xpt.z + 110) / 20; // normalise z	
+	double noise = perlin.noise(nory * 5, norx * 5, norz);
+	return glm::vec3(1 + sin(10 * nory + 20 * noise), (1 + sin(30 * nory + 20 * noise)) / 2.5, 1 + sin(30 * norx + 20 * noise));
 }
 
 
@@ -123,22 +130,22 @@ glm::vec3 trace(Ray ray, int step) // step starts at 1
 	}
 
 	if (ray.xindex == 0) {
-		return textureBackground(ray);
+		//return textureBackground(ray);
 	}
 	if (ray.xindex == 1) {
-		return textureFloor(ray);
+		//return textureFloor(ray);
 	}
 	if (ray.xindex == 2) {
-		return textureLeftside(ray);
+		//return textureLeftside(ray);
 	}
 	if (ray.xindex == 3) {
-		return textureRightside(ray);
+		//return textureRightside(ray);
 	}
 	if (ray.xindex == 4) {
-		return textureTopside(ray);
+		//return textureTopside(ray);
 	}
 	if (ray.xindex == 5) {
-		return textureBehindside(ray);
+		//return textureBehindside(ray);
 	}
 	
 	Ray shadow(ray.xpt, unitLightVector);
@@ -151,10 +158,15 @@ glm::vec3 trace(Ray ray, int step) // step starts at 1
 		glm::vec3 colorSum(0);
 	
 		if (ray.xindex == 9) {
-			return texture2D(ray);
+			//return texture2D(ray);
 		}
 		if (ray.xindex == 8) {
 			//col = textureProcedural(ray);
+			//return (ambientCol * col + lDotn * col); // no specular
+		}
+
+		if (ray.xindex == 14 || ray.xindex == 15 || ray.xindex == 17) {
+			//col = textureProceduralBox(ray);
 			//return (ambientCol * col + lDotn * col); // no specular
 		}
 
@@ -166,9 +178,9 @@ glm::vec3 trace(Ray ray, int step) // step starts at 1
 		//	colorSum = colorSum + (0.9f * reflectedCol);
 		//}
 		
-		// refraction
-		//if (ray.xindex == 0 && step < MAX_STEPS) {
-		//	float eta = 1/1.05;
+		//// refraction
+		//if (ray.xindex == 7 && step < MAX_STEPS) {
+		//	float eta = 1 / 1.02;
 		//	glm::vec3 refractedDir1 = glm::refract(ray.dir, normalVector, eta);
 		//	
 		//	Ray refractedRay(ray.xpt, refractedDir1);
@@ -181,23 +193,23 @@ glm::vec3 trace(Ray ray, int step) // step starts at 1
 		//	outputRay.closestPt(sceneObjects);
 		//	if (outputRay.xindex == -1) return backgroundCol;
 		//	glm::vec3 refrCol = trace(outputRay, step+1); // has to be trace
-		//	return refrCol;
+		//	return (0.4f * lDotn * col) + refrCol;
 		//}
-		// transparent - TODO there is something very wrong here
-		//if (ray.xindex == 1 && step < MAX_STEPS) {
+		//// transparent
+		//if ((ray.xindex == 11) && step < MAX_STEPS) {
 		//	float eta = 1.0;
 		//	glm::vec3 refractedDir1 = glm::refract(ray.dir, normalVector, eta);
 
 		//	Ray refractedRay(ray.xpt, refractedDir1);
 		//	refractedRay.closestPt(sceneObjects);
-		//	if (refractedRay.xindex == -1) return glm::vec3(1); //lDotn * col;
+		//	if (refractedRay.xindex == -1) return backgroundCol;
 		//	glm::vec3 normal = sceneObjects[refractedRay.xindex]->normal(refractedRay.xpt);
 		//	glm::vec3 refractedDir2 = glm::refract(refractedDir1, -normal, 1.0f / eta);
 
 		//	Ray outputRay(refractedRay.xpt, refractedDir2);
 		//	outputRay.closestPt(sceneObjects);
-		//	if (outputRay.xindex == -1) return glm::vec3(0); //lDotn * col;
-		//	glm::vec3 refrCol = trace(outputRay, step + 1);
+		//	if (outputRay.xindex == -1) return backgroundCol;
+		//	glm::vec3 refrCol = trace(outputRay, step + 1); // has to be trace
 		//	return ambientCol * col + lDotn * col + refrCol;
 		//}
 		
@@ -307,11 +319,11 @@ void initialize()
 	//-- Create a pointer to a sphere object: x, y, z, radius, color
 	Sphere *sphereBlue = new Sphere(glm::vec3(-5.0, -5.0, -150.0), 15.0, glm::vec3(0, 0, 0.8));
 	Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -130.0), 2.3, glm::vec3(0.5, 0.5, 0.5));
-	Cylinder *cylinderRed = new Cylinder(glm::vec3(17, -10, -100), 4, 10, glm::vec3(1, 0, 0));
+	Cylinder *cylinderRed = new Cylinder(glm::vec3(17, -10, -100), 4, 10, glm::vec3(1, 0, 1));
 	Sphere *sphereGreen = new Sphere(glm::vec3(15.0, 5, -185.0), 20.0, glm::vec3(1, 0, 0));
-	Sphere *sphereGrey = new Sphere(glm::vec3(-15, -10, -115.0), 8.0, glm::vec3(0.7, 0.7, 0.7));
-	Cone *coneGrey = new Cone(glm::vec3(17, 0, -100), 4, 4, glm::vec3(0, 1, 0));
-	Sphere *sphereOrange = new Sphere(glm::vec3(10, -15, -85.0), 4.0, glm::vec3(1, 0.7, 0));
+	Sphere *sphereGrey = new Sphere(glm::vec3(-18, -10, -115.0), 8.0, glm::vec3(0, 0, 0));
+	Cone *coneGrey = new Cone(glm::vec3(17, 0, -100), 4, 4, glm::vec3(0.9, 0, 0.9));
+	Sphere *sphereOrange = new Sphere(glm::vec3(10, -15, -85.0), 4.0, glm::vec3(1, 0.6, 0));
 
 	// box
 	float min_x = -20;
@@ -320,7 +332,7 @@ void initialize()
 	float max_y = 15;
 	float min_z = -110;
 	float max_z = -140;
-	glm::vec3 boxcol(0.7, 0.6, 0.2);
+	glm::vec3 boxcol(0.5, 0.5, 0.2);
 
 	/*
 	// translate using mat4 before shearing?
@@ -382,10 +394,10 @@ void initialize()
 	sceneObjects.push_back(sphereGreen); //8 procedural sphere
 	sceneObjects.push_back(sphereGrey); //9 2d texture sphere - near reflective
 	sceneObjects.push_back(coneGrey); //10 cone - on top of cylinder
-	sceneObjects.push_back(sphereOrange); //11 transparent sphere - top corner
+	sceneObjects.push_back(sphereOrange); //11 transparent sphere
 	sceneObjects.push_back(sphereRed); //12 shadow caster
 	
-	sceneObjects.push_back(left); //12 sheared cube - shadow caster, near reflective
+	sceneObjects.push_back(left); //13 sheared cube - shadow caster, near reflective
 	sceneObjects.push_back(right); // sheared cube
 	sceneObjects.push_back(bottom); // sheared cube
 	sceneObjects.push_back(top); // sheared cube
