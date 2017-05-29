@@ -33,6 +33,7 @@ const float PI = 3.14159;
 vector<SceneObject*> sceneObjects;  //A global list containing pointers to objects in the scene
 TextureBMP texturePurple;
 TextureBMP textureBlue;
+TextureBMP textureGreen;
 PerlinNoise perlin;
 
 glm::vec3 textureBackground(Ray ray) {
@@ -79,6 +80,16 @@ glm::vec3 texture2D(Ray ray) {
 	float texcoords = 0.5 + atan2(norz, norx) / (2 * PI);
 	float texcoordt = 0.5 - asin(nory) / PI;
 	return texturePurple.getColorAt(texcoords, texcoordt);
+}
+
+glm::vec3 texture2DGreen(Ray ray) {
+	glm::vec3 n = sceneObjects[ray.xindex]->normal(ray.xpt);
+	float norx = (ray.xpt.x + 5) / 15; // normalise x
+	float nory = (ray.xpt.y + 5) / 15; // normalise y
+	float norz = (ray.xpt.z + 145) / 15; // normalise z
+	float texcoords = 0.5 + atan2(norz, norx) / (2 * PI);
+	float texcoordt = 0.5 - asin(nory) / PI;
+	return textureGreen.getColorAt(texcoords, texcoordt);
 }
 
 glm::vec3 textureProcedural(Ray ray) {
@@ -130,22 +141,22 @@ glm::vec3 trace(Ray ray, int step) // step starts at 1
 	}
 
 	if (ray.xindex == 0) {
-		//return textureBackground(ray);
+		return textureBackground(ray);
 	}
 	if (ray.xindex == 1) {
-		//return textureFloor(ray);
+		return textureFloor(ray);
 	}
 	if (ray.xindex == 2) {
-		//return textureLeftside(ray);
+		return textureLeftside(ray);
 	}
 	if (ray.xindex == 3) {
-		//return textureRightside(ray);
+		return textureRightside(ray);
 	}
 	if (ray.xindex == 4) {
-		//return textureTopside(ray);
+		return textureTopside(ray);
 	}
 	if (ray.xindex == 5) {
-		//return textureBehindside(ray);
+		return textureBehindside(ray);
 	}
 	
 	Ray shadow(ray.xpt, unitLightVector);
@@ -158,60 +169,64 @@ glm::vec3 trace(Ray ray, int step) // step starts at 1
 		glm::vec3 colorSum(0);
 	
 		if (ray.xindex == 9) {
-			//return texture2D(ray);
+			return 0.4f * (ambientCol * col + lDotn * col) + 0.6f * texture2D(ray);
 		}
+		if (ray.xindex == 6) {
+			col = (0.6f * col) + (0.4f * texture2DGreen(ray));
+		}
+
 		if (ray.xindex == 8) {
-			//col = textureProcedural(ray);
-			//return (ambientCol * col + lDotn * col); // no specular
+			col = textureProcedural(ray);
+			return (ambientCol * col + lDotn * col); // no specular
 		}
 
 		if (ray.xindex == 14 || ray.xindex == 15 || ray.xindex == 17) {
-			//col = textureProceduralBox(ray);
-			//return (ambientCol * col + lDotn * col); // no specular
+			col = textureProceduralBox(ray);
+			return (ambientCol * col + lDotn * col); // no specular
 		}
 
-		//if (ray.xindex == 6 && step < MAX_STEPS) {
-		//	// reflection
-		//	glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
-		//	Ray reflectedRay(ray.xpt, reflectedDir);
-		//	glm::vec3 reflectedCol = trace(reflectedRay, step + 1);
-		//	colorSum = colorSum + (0.9f * reflectedCol);
-		//}
+		if (ray.xindex == 6 && step < MAX_STEPS) {
+			// reflection
+			glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
+			Ray reflectedRay(ray.xpt, reflectedDir);
+			glm::vec3 reflectedCol = trace(reflectedRay, step + 1);
+			colorSum = colorSum + (0.9f * reflectedCol);
+		}
 		
-		//// refraction
-		//if (ray.xindex == 7 && step < MAX_STEPS) {
-		//	float eta = 1 / 1.02;
-		//	glm::vec3 refractedDir1 = glm::refract(ray.dir, normalVector, eta);
-		//	
-		//	Ray refractedRay(ray.xpt, refractedDir1);
-		//	refractedRay.closestPt(sceneObjects);
-		//	if (refractedRay.xindex == -1) return backgroundCol;
-		//	glm::vec3 normal = sceneObjects[refractedRay.xindex]->normal(refractedRay.xpt);
-		//	glm::vec3 refractedDir2 = glm::refract(refractedDir1, -normal, 1.0f/eta);
+		// refraction
+		if (ray.xindex == 7 && step < MAX_STEPS) {
+			float eta = 1 / 1.02;
+			glm::vec3 refractedDir1 = glm::refract(ray.dir, normalVector, eta);
+			
+			Ray refractedRay(ray.xpt, refractedDir1);
+			refractedRay.closestPt(sceneObjects);
+			if (refractedRay.xindex == -1) return backgroundCol;
+			glm::vec3 normal = sceneObjects[refractedRay.xindex]->normal(refractedRay.xpt);
+			glm::vec3 refractedDir2 = glm::refract(refractedDir1, -normal, 1.0f/eta);
 
-		//	Ray outputRay(refractedRay.xpt, refractedDir2);
-		//	outputRay.closestPt(sceneObjects);
-		//	if (outputRay.xindex == -1) return backgroundCol;
-		//	glm::vec3 refrCol = trace(outputRay, step+1); // has to be trace
-		//	return (0.4f * lDotn * col) + refrCol;
-		//}
-		//// transparent
-		//if ((ray.xindex == 11) && step < MAX_STEPS) {
-		//	float eta = 1.0;
-		//	glm::vec3 refractedDir1 = glm::refract(ray.dir, normalVector, eta);
+			Ray outputRay(refractedRay.xpt, refractedDir2);
+			outputRay.closestPt(sceneObjects);
+			if (outputRay.xindex == -1) return backgroundCol;
+			glm::vec3 refrCol = trace(outputRay, step+1); // has to be trace
+			return (0.4f * lDotn * col) + refrCol;
+		}
+		// transparent
+		if ((ray.xindex == 11) && step < MAX_STEPS) {
+			float eta = 1.0;
+			glm::vec3 refractedDir1 = glm::refract(ray.dir, normalVector, eta);
 
-		//	Ray refractedRay(ray.xpt, refractedDir1);
-		//	refractedRay.closestPt(sceneObjects);
-		//	if (refractedRay.xindex == -1) return backgroundCol;
-		//	glm::vec3 normal = sceneObjects[refractedRay.xindex]->normal(refractedRay.xpt);
-		//	glm::vec3 refractedDir2 = glm::refract(refractedDir1, -normal, 1.0f / eta);
+			Ray refractedRay(ray.xpt, refractedDir1);
+			refractedRay.closestPt(sceneObjects);
+			if (refractedRay.xindex == -1) return backgroundCol;
+			glm::vec3 normal = sceneObjects[refractedRay.xindex]->normal(refractedRay.xpt);
+			glm::vec3 refractedDir2 = glm::refract(refractedDir1, -normal, 1.0f / eta);
 
-		//	Ray outputRay(refractedRay.xpt, refractedDir2);
-		//	outputRay.closestPt(sceneObjects);
-		//	if (outputRay.xindex == -1) return backgroundCol;
-		//	glm::vec3 refrCol = trace(outputRay, step + 1); // has to be trace
-		//	return ambientCol * col + lDotn * col + refrCol;
-		//}
+			Ray outputRay(refractedRay.xpt, refractedDir2);
+			outputRay.closestPt(sceneObjects);
+			if (outputRay.xindex == -1) return backgroundCol;
+			glm::vec3 refrCol = trace(outputRay, step + 1); // has to be trace
+			return ambientCol * col + lDotn * col + refrCol;
+		}
 		
 		return (ambientCol * col + lDotn * col + specularCol + colorSum); // ambient + diffuse + specular + reflection
 	}
@@ -277,8 +292,9 @@ void initialize()
     glClearColor(0, 0, 0, 1);
 
 	// TODO BEFORE SUBMISSION find a way of loading based on relative path
-	texturePurple = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\purple-space.bmp");
+	texturePurple = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\pink-planet.bmp");
 	textureBlue = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\plain-blue-space.bmp");
+	textureGreen = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\green-planet.bmp");
 
 	Plane *background = new Plane(glm::vec3(-40, -20, -200), // back left
 		glm::vec3(40, -20, -200), // back right
@@ -317,35 +333,35 @@ void initialize()
 		glm::vec3(1, 1, 1)); // default colour	
 
 	//-- Create a pointer to a sphere object: x, y, z, radius, color
-	Sphere *sphereBlue = new Sphere(glm::vec3(-5.0, -5.0, -150.0), 15.0, glm::vec3(0, 0, 0.8));
-	Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -130.0), 2.3, glm::vec3(0.5, 0.5, 0.5));
+	Sphere *sphereBlue = new Sphere(glm::vec3(-5.0, -5.0, -145.0), 15.0, glm::vec3(0, 0, 0.8));
+	Sphere *sphereRed = new Sphere(glm::vec3(5.0, 2, -125.0), 2.3, glm::vec3(0.5, 0.5, 0.5));
 	Cylinder *cylinderRed = new Cylinder(glm::vec3(17, -10, -100), 4, 10, glm::vec3(1, 0, 1));
 	Sphere *sphereGreen = new Sphere(glm::vec3(15.0, 5, -185.0), 20.0, glm::vec3(1, 0, 0));
-	Sphere *sphereGrey = new Sphere(glm::vec3(-18, -10, -115.0), 8.0, glm::vec3(0, 0, 0));
+	Sphere *sphereGrey = new Sphere(glm::vec3(-18, -10, -115.0), 8.0, glm::vec3(0.6, 0, 0.6));
 	Cone *coneGrey = new Cone(glm::vec3(17, 0, -100), 4, 4, glm::vec3(0.9, 0, 0.9));
 	Sphere *sphereOrange = new Sphere(glm::vec3(10, -15, -85.0), 4.0, glm::vec3(1, 0.6, 0));
 
 	// box
-	float min_x = -20;
-	float max_x = -10;
-	float min_y = 10;
-	float max_y = 15;
-	float min_z = -110;
-	float max_z = -140;
+	float min_x = 0; // -20;
+	float max_x = 10; //-10;
+	float min_y = 0; //10;
+	float max_y = 5; //15;
+	float min_z = 0; //-110;
+	float max_z = -30; //-140;
 	glm::vec3 boxcol(0.5, 0.5, 0.2);
 
-	/*
-	// translate using mat4 before shearing?
-	glm::mat4 t(1, 0, 0, min_x,
-				0, 1, 0, min_y,
-				0, 0, 1, min_z,
+	
+	// translate using mat4 after shearing
+	glm::mat4 t(1, 0, 0, -20,
+				0, 1, 0, 10,
+				0, 0, 1, -110,
 				0, 0, 0, 1);
 
-	glm::mat4 m(1, 2, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
+	glm::mat4 m(1, 0, 0, 0,
+				-0.7, 1, 0, 0, // xy
+				-0.1, 0, 1, 0, // xz
 				0, 0, 0, 1);
-	*/
+	
 	glm::vec3 flb(min_x, min_y, min_z);
 	glm::vec3 flt(min_x, max_y, min_z);
 	glm::vec3 frb(max_x, min_y, min_z);
@@ -354,15 +370,15 @@ void initialize()
 	glm::vec3 blb(min_x, min_y, max_z);
 	glm::vec3 brt(max_x, max_y, max_z);
 	glm::vec3 brb(max_x, min_y, max_z);
-	/*
-	glm::vec4 flb4 = m * glm::vec4(glm::vec3(flb), 1.0);
-	glm::vec4 flt4 = m * glm::vec4(glm::vec3(flt), 1.0);
-	glm::vec4 frb4 = m * glm::vec4(glm::vec3(frb), 1.0);
-	glm::vec4 frt4 = m * glm::vec4(glm::vec3(frt), 1.0);
-	glm::vec4 blb4 = m * glm::vec4(glm::vec3(blt), 1.0);
-	glm::vec4 blt4 = m * glm::vec4(glm::vec3(blb), 1.0);
-	glm::vec4 brb4 = m * glm::vec4(glm::vec3(brt), 1.0);
-	glm::vec4 brt4 = m * glm::vec4(glm::vec3(brb), 1.0);
+	
+	glm::vec4 flb4 = m * glm::vec4(glm::vec3(flb), 1.0) * t;
+	glm::vec4 flt4 = m * glm::vec4(glm::vec3(flt), 1.0) * t;
+	glm::vec4 frb4 = m * glm::vec4(glm::vec3(frb), 1.0) * t;
+	glm::vec4 frt4 = m * glm::vec4(glm::vec3(frt), 1.0) * t;
+	glm::vec4 blt4 = m * glm::vec4(glm::vec3(blt), 1.0) * t;
+	glm::vec4 blb4 = m * glm::vec4(glm::vec3(blb), 1.0) * t;
+	glm::vec4 brt4 = m * glm::vec4(glm::vec3(brt), 1.0) * t;
+	glm::vec4 brb4 = m * glm::vec4(glm::vec3(brb), 1.0) * t;
 	
 	flb = glm::vec3(flb4.x / flb4.w, flb4.y / flb4.w, flb4.z / flb4.w); // normalise
 	flt = glm::vec3(flt4.x / flt4.w, flt4.y / flt4.w, flt4.z / flt4.w);
@@ -372,7 +388,6 @@ void initialize()
 	blt = glm::vec3(blt4.x / blt4.w, blt4.y / blt4.w, blt4.z / blt4.w);
 	brb = glm::vec3(brb4.x / brb4.w, brb4.y / brb4.w, brb4.z / brb4.w);
 	brt = glm::vec3(brt4.x / brt4.w, brt4.y / brt4.w, brt4.z / brt4.w);
-	*/
 	
 	Plane *left = new Plane(blb, flb, flt, blt, boxcol); 
 	Plane *right = new Plane(brt, frt, frb, brb, boxcol); 
