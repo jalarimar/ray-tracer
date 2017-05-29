@@ -37,7 +37,8 @@ glm::vec3 transformProj(glm::mat4 matx, glm::vec3 pos) {
 }
 
 float SceneObject::intersect(glm::vec3 pos, glm::vec3 dir) {
-	return intersect_internal(transformProj(transformInv, pos), dir);
+	//return intersect_internal(transformProj(transformInv, pos), dir);
+	return intersect_internal(pos, dir);
 }
 
 glm::vec3 SceneObject::normal(glm::vec3 pos) {

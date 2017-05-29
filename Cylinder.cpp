@@ -53,6 +53,7 @@ float Cylinder::intersect_internal(glm::vec3 posn, glm::vec3 dir)
 	float t1 = (-b - sqrt(discrim)) / (2*a);
 	float t2 = -b + sqrt(discrim) / (2*a);
 	float t = -5.0;
+	float tf = -5.0;
 
 	if (fabs(t2) < 0.001) t2 = -1.0;
 	if (fabs(t1) < 0.001)
@@ -63,6 +64,7 @@ float Cylinder::intersect_internal(glm::vec3 posn, glm::vec3 dir)
 
 	if (t == -5.0) {
 		t = (t1 < t2) ? t1 : t2;
+		tf = (t1 < t2) ? t2 : t1;
 	}
 	// return t;
 	if (t < 0.0) {
@@ -70,16 +72,13 @@ float Cylinder::intersect_internal(glm::vec3 posn, glm::vec3 dir)
 	}
 
 	float y = y0 + dy*t;
-	if ((y-yc) > height || (y - yc) < 0) {
-		return -1.0; // invalid
+	if ((y - yc) < 0.0 || (y - yc) > height) {
+		float y2 = y0 + dy*tf;
+		if (!((y2 - yc) < 0.0 || (y2 - yc) > height) && fabs(tf) < 0.001) {
+			return tf; // valid second point
+		}
+		return -1.0; //invalid
 	}
-	/*
-	float x1 = x0 + dx*t1;
-	float z1 = z0 + dz*t1;
-	if (fabs(y1-yc) == height && fabs(x1-xc) < radius && fabs(z1-zc) < radius) {
-		return t1;
-	}
-	*/
 	return t;
 }
 
