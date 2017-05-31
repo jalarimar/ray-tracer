@@ -24,7 +24,7 @@ class TextureBMP
     public:
 		TextureBMP(): imageWid(0), imageHgt(0), imageChnls(0) {}
         TextureBMP(char* string);
-        glm::vec3 TextureBMP::getColorAt(float s, float t);
+        glm::vec3 getColorAt(float s, float t);
 };
 
 #endif

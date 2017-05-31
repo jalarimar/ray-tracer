@@ -73,7 +73,6 @@ glm::vec3 textureBehindside(Ray ray) {
 }
 
 glm::vec3 texture2D(Ray ray) {
-	glm::vec3 n = sceneObjects[ray.xindex]->normal(ray.xpt);
 	float norx = (ray.xpt.x + 18) / 8; // normalise x
 	float nory = (ray.xpt.y + 10) / 8; // normalise y
 	float norz = (ray.xpt.z + 115) / 8; // normalise z
@@ -83,7 +82,6 @@ glm::vec3 texture2D(Ray ray) {
 }
 
 glm::vec3 texture2DGreen(Ray ray) {
-	glm::vec3 n = sceneObjects[ray.xindex]->normal(ray.xpt);
 	float norx = (ray.xpt.x + 5) / 15; // normalise x
 	float nory = (ray.xpt.y + 5) / 15; // normalise y
 	float norz = (ray.xpt.z + 145) / 15; // normalise z
@@ -291,10 +289,9 @@ void initialize()
     gluOrtho2D(XMIN, XMAX, YMIN, YMAX);
     glClearColor(0, 0, 0, 1);
 
-	// TODO BEFORE SUBMISSION find a way of loading based on relative path
-	texturePurple = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\pink-planet.bmp");
-	textureBlue = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\plain-blue-space.bmp");
-	textureGreen = TextureBMP("C:\\Users\\Jay\\Documents\\Engineering2017\\363\\Assignment2\\ray-tracer\\green-planet.bmp");
+	texturePurple = TextureBMP("pink-planet.bmp");
+	textureBlue = TextureBMP("plain-blue-space.bmp");
+	textureGreen = TextureBMP("green-planet.bmp");
 
 	Plane *background = new Plane(glm::vec3(-40, -20, -200), // back left
 		glm::vec3(40, -20, -200), // back right
@@ -351,17 +348,18 @@ void initialize()
 	glm::vec3 boxcol(0.5, 0.5, 0.2);
 
 	
-	// translate using mat4 after shearing
+	// translate
 	glm::mat4 t(1, 0, 0, -20,
 				0, 1, 0, 10,
 				0, 0, 1, -110,
 				0, 0, 0, 1);
-
-	glm::mat4 m(1, 0, 0, 0,
-				-0.7, 1, 0, 0, // xy
-				-0.1, 0, 1, 0, // xz
-				0, 0, 0, 1);
 	
+	// shear
+	glm::mat4 s(1, -0.7, -0.1, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1);
+
 	glm::vec3 flb(min_x, min_y, min_z);
 	glm::vec3 flt(min_x, max_y, min_z);
 	glm::vec3 frb(max_x, min_y, min_z);
@@ -371,14 +369,14 @@ void initialize()
 	glm::vec3 brt(max_x, max_y, max_z);
 	glm::vec3 brb(max_x, min_y, max_z);
 	
-	glm::vec4 flb4 = m * glm::vec4(glm::vec3(flb), 1.0) * t;
-	glm::vec4 flt4 = m * glm::vec4(glm::vec3(flt), 1.0) * t;
-	glm::vec4 frb4 = m * glm::vec4(glm::vec3(frb), 1.0) * t;
-	glm::vec4 frt4 = m * glm::vec4(glm::vec3(frt), 1.0) * t;
-	glm::vec4 blt4 = m * glm::vec4(glm::vec3(blt), 1.0) * t;
-	glm::vec4 blb4 = m * glm::vec4(glm::vec3(blb), 1.0) * t;
-	glm::vec4 brt4 = m * glm::vec4(glm::vec3(brt), 1.0) * t;
-	glm::vec4 brb4 = m * glm::vec4(glm::vec3(brb), 1.0) * t;
+	glm::vec4 flb4 = glm::vec4(glm::vec3(flb), 1.0) * s * t;
+	glm::vec4 flt4 = glm::vec4(glm::vec3(flt), 1.0) * s * t;
+	glm::vec4 frb4 = glm::vec4(glm::vec3(frb), 1.0) * s * t;
+	glm::vec4 frt4 = glm::vec4(glm::vec3(frt), 1.0) * s * t;
+	glm::vec4 blt4 = glm::vec4(glm::vec3(blt), 1.0) * s * t;
+	glm::vec4 blb4 = glm::vec4(glm::vec3(blb), 1.0) * s * t;
+	glm::vec4 brt4 = glm::vec4(glm::vec3(brt), 1.0) * s * t;
+	glm::vec4 brb4 = glm::vec4(glm::vec3(brb), 1.0) * s * t;
 	
 	flb = glm::vec3(flb4.x / flb4.w, flb4.y / flb4.w, flb4.z / flb4.w); // normalise
 	flt = glm::vec3(flt4.x / flt4.w, flt4.y / flt4.w, flt4.z / flt4.w);
